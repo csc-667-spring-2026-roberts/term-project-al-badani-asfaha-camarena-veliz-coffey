@@ -12,12 +12,12 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(path.resolve(), "../public")));
 
 app.use((request, response, next) => {
-    console.log(`${new Date().toISOString()} ${request.method} ${request.path}`);
-    next();
+  console.log(`${new Date().toISOString()} ${request.method} ${request.path}`);
+  next();
 });
 
 app.use("/", homeRoutes);
 
 app.listen(PORT, () => {
-    console.log(`Server is running on localhost ${PORT}`);
+  console.log("Server is running at http://localhost:" + String(PORT));
 });
