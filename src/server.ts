@@ -1,7 +1,7 @@
 import express from "express";
 import path from "path";
 
-import homeRoutes from "./routes/home.ts";
+import homeRoutes from "./routes/home.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -11,7 +11,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(express.static(path.join(path.resolve(), "../public")));
 
-app.use((request, response, next) => {
+app.use((request, _, next) => {
   console.log(`${new Date().toISOString()} ${request.method} ${request.path}`);
   next();
 });
