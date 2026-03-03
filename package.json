@@ -7,7 +7,7 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
-    "dev": "nodemon -L --watch src --ext ts,json --exec tsx src/server.ts",
+    "dev": "tsx watch src/server.ts",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
     "format": "prettier --write \"src/**/*.ts\"",
