@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use(express.static(path.join(path.resolve(), "../public")));
+app.use(express.static(path.join(path.resolve(), "/public")));
 
 app.use((request, _, next) => {
   console.log(`${new Date().toISOString()} ${request.method} ${request.path}`);

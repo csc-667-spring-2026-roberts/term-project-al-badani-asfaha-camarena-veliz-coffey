@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Test DB Connection</title>
+  </head>
+  <body>
+    <h1>Test DB Connection</h1>
+    <h2>Upsert Record</h2>
+    <form action="/test" method="POST">
+      <label>ID: <input type="text" name="id" /></label>
+      <label>Message: <input type="text" name="message" /></label>
+      <button type="submit">Upsert Record</button>
+    </form>
+
+    <h2>Database Records</h2>
+    <pre id="database-records"></pre>
+
+    <script>
+      async function getAndShowDatabaseRecords(apiURL, htmlElementId) {
+        try {
+          const response = await fetch(apiURL);
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const dataObject = await response.json();
+
+          const prettyJsonString = JSON.stringify(dataObject, null, 2);
+
+          const outputElement = document.getElementById(htmlElementId);
+          if (outputElement) {
+            outputElement.textContent = prettyJsonString;
+          } else {
+            console.error(`HTML element with ID "${htmlElementId}" not found.`);
+          }
+        } catch (error) {
+          console.error("Error fetching or processing JSON:", error);
+          const outputElement = document.getElementById(htmlElementId);
+          if (outputElement) {
+            outputElement.textContent = `Error: ${error.message}`;
+          }
+        }
+      }
+      getAndShowDatabaseRecords("/test/getData", "database-records");
+    </script>
+  </body>
+</html>
