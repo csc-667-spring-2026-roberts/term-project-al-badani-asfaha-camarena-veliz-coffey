@@ -22,7 +22,7 @@ router.get("/getData", async (_, response) => {
 });
 
 router.post("/", async (request, response) => {
-  const { id, message } = request.body;
+  const { id, message } = request.body as { id: number; message: string };
   await db.none(
     `INSERT INTO test_table (id, message)
 VALUES ($1, $2)
