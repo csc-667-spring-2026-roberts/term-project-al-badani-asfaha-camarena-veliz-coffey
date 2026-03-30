@@ -1,7 +1,7 @@
 import express from "express";
 import path from "path";
 
-import accountRoutes from "./routes/account.js";
+// import accountRoutes from "./routes/account.js";
 import homeRoutes from "./routes/home.js";
 import testRoutes from "./routes/test.js";
 import { fileURLToPath } from "url";
@@ -23,6 +23,7 @@ app.use(express.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 
 app.use(express.static(path.join(__dirname, "..", "/public")));
+app.use(express.static(path.join(path.resolve(), "/views")));
 
 app.use(
   session({
@@ -49,9 +50,9 @@ app.use((request, _, next) => {
 // app.use(loggingMiddleware);
 
 app.use("/", homeRoutes);
-app.use("/", accountRoutes);
+// app.use("/", accountRoutes);
 app.use("/test", testRoutes);
-app.use("/auth", authRoutes);
+app.use("/", authRoutes);
 
 app.listen(PORT, () => {
   console.log("Server is running at http://localhost:" + String(PORT));
