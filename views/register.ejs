@@ -1,0 +1,13 @@
+<%- include('partials/header', { title: 'Register' }) %>
+
+<main>
+  <div class="center-wrapper">
+    <h1>Sign up</h1>
+    <%- include('partials/accountForm', { label: 'Register', route: '/register' }) %>
+    <div>
+      <a href="/login">You have account? Login here</a>
+    </div>
+  </div>
+</main>
+
+<%- include('partials/footer') %>
