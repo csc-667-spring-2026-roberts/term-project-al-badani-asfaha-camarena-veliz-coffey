@@ -3,6 +3,7 @@ import crypto from "crypto";
 import Users from "../db/users.js";
 import bcrypt from "bcrypt";
 import { TypedRequestBody, UserLoginRequestBody, User } from "../types/types.js";
+import { requireAuth } from "../middleware/auth.js";
 
 const router = Router();
 
@@ -56,17 +57,18 @@ router.post("/register", async (request: TypedRequestBody<UserLoginRequestBody>,
   }
 });
 
-router.get("/lobby", (request, response) => {
-  const user: User | undefined = request.session.user;
-  if (user === undefined) {
-    response.redirect("/login");
-    return;
-  }
+router.get("/lobby", requireAuth, (request, response) => {
+  const user: User = request.session.user;
   // extract user email from session and put it here
   response.render("lobby", { email: user.email, avatar: user.gravatar_url });
 });
 
-router.get("/register", (_, response) => {
+router.get("/register", (request, response) => {
+  if (request.session.user?.id) {
+    // User already signed in
+    response.redirect("/lobby");
+    return;
+  }
   response.render("register");
 });
 
@@ -105,7 +107,12 @@ router.post("/login", async (request: TypedRequestBody<UserLoginRequestBody>, re
   }
 });
 
-router.get("/login", (_, response) => {
+router.get("/login", (request, response) => {
+  if (request.session.user?.id) {
+    // User already signed in
+    response.redirect("/lobby");
+    return;
+  }
   response.render("login");
 });
 
