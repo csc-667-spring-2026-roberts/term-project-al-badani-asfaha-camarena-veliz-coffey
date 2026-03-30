@@ -2,7 +2,8 @@ import { Router } from "express";
 import crypto from "crypto";
 import Users from "../db/users.js";
 import bcrypt from "bcrypt";
-import { TypedRequestBody, UserLoginRequestBody } from "../types/types.js";
+import { TypedRequestBody, UserLoginRequestBody, User } from "../types/types.js";
+import { requireAuth } from "../middleware/auth.js";
 
 const router = Router();
 
@@ -18,18 +19,23 @@ router.post("/register", async (request: TypedRequestBody<UserLoginRequestBody>,
   const { email, password } = request.body;
 
   if (!email || !password) {
-    response.status(400).json({ error: "Email and password are required" });
+    // response.status(400).json({ error: "Email and password are required" });
+    response.status(400).render("register", { errorMessage: "Email and password are required" });
     return;
   }
 
   if (password.length < 8) {
-    response.status(400).json({ error: "Password must be at least 8 characters long" });
+    // response.status(400).json({ error: "Password must be at least 8 characters long" });
+    response
+      .status(400)
+      .render("register", { errorMessage: "Password must be at least 8 characters long" });
     return;
   }
 
   try {
     if (await Users.existing(email)) {
-      response.status(409).json({ error: "Email is already registered" });
+      // response.status(409).json({ error: "Email is already registered" });
+      response.status(409).render("register", { errorMessage: "Email is already registered" });
       return;
     }
 
@@ -40,20 +46,38 @@ router.post("/register", async (request: TypedRequestBody<UserLoginRequestBody>,
 
     request.session.user = user;
 
-    response.status(201).json({
-      ...user,
-    });
+    // response.status(201).json({
+    //   ...user,
+    // });
+    response.redirect("/lobby");
   } catch (error) {
     console.error("Registration error:", error);
-    response.status(500).json({ error: "Internal server error" });
+    // response.status(500).json({ error: "Internal server error" });
+    response.status(409).render("register", { errorMessage: "Internal server error" });
   }
+});
+
+router.get("/lobby", requireAuth, (request, response) => {
+  const user: User = request.session.user;
+  // extract user email from session and put it here
+  response.render("lobby", { email: user.email, avatar: user.gravatar_url });
+});
+
+router.get("/register", (request, response) => {
+  if (request.session.user?.id) {
+    // User already signed in
+    response.redirect("/lobby");
+    return;
+  }
+  response.render("register");
 });
 
 router.post("/login", async (request: TypedRequestBody<UserLoginRequestBody>, response) => {
   const { email, password } = request.body;
 
   if (!email || !password) {
-    response.status(400).json({ error: "Email and password are required" });
+    // response.status(400).json({ error: "Email and password are required" });
+    response.status(500).render("login", { errorMessage: "Email and password are required" });
     return;
   }
 
@@ -74,14 +98,25 @@ router.post("/login", async (request: TypedRequestBody<UserLoginRequestBody>, re
 
     request.session.user = user;
 
-    response.json(user);
+    // response.json(user);
+    response.redirect("/lobby");
   } catch (error) {
     console.error("Login error:", error);
-    response.status(500).json({ error: "Invalid email or password" });
+    // response.status(500).json({ error: "Invalid email or password" });
+    response.status(500).render("login", { errorMessage: "Invalid email or password" });
   }
 });
 
-router.post("/logout", (request, response) => {
+router.get("/login", (request, response) => {
+  if (request.session.user?.id) {
+    // User already signed in
+    response.redirect("/lobby");
+    return;
+  }
+  response.render("login");
+});
+
+router.get("/logout", (request, response) => {
   request.session.destroy((error) => {
     if (error) {
       console.error("Logout error:", error);
@@ -90,7 +125,8 @@ router.post("/logout", (request, response) => {
     }
 
     response.clearCookie("connect.sid");
-    response.json({ message: "Logged out successfully" });
+    // response.json({ message: "Logged out successfully" });
+    response.redirect("/login");
   });
 });
 
