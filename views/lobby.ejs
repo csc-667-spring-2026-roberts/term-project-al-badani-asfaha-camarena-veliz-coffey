@@ -1,5 +1,15 @@
 <%- include('partials/header', { title: 'Lobby' }) %>
 
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>
+    <%= typeof title !=="undefined" ? title : "Exploding Kittens" %>
+  </title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="/js/lobby.js" defer></script>
+</head>
+
 <main>
   <div class="center-wrapper center-elements">
     <h1>Account Info</h1>

@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../src/client/lobby.ts"],
+  "sourcesContent": ["console.log(\"Lobby client loaded\");"],
+  "mappings": ";;;AAAA,UAAQ,IAAI,qBAAqB;",
+  "names": []
+}

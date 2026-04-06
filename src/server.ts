@@ -9,6 +9,8 @@ import connectPgSimple from "connect-pg-simple";
 import session from "express-session";
 import db from "./db/connection.js";
 import authRoutes from "./routes/auth.js";
+import livereload from "livereload";
+import connectLivereload from "connect-livereload";
 // import loggingMiddleware from "./middleware/logging.js";
 
 const app = express();
@@ -16,13 +18,25 @@ const PORT = process.env.PORT || 3000;
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+if (process.env.NODE_ENV !== "production") {
+  const liveReloadServer = livereload.createServer({ exts: ["ejs", "css", "js"] });
+
+  liveReloadServer.watch([
+    path.join(__dirname, "..", "public"),
+    path.join(__dirname, "..", "views"),
+  ]);
+
+  app.use(connectLivereload());
+}
+
 const PgSession = connectPgSimple(session);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.set("view engine", "ejs");
 
 app.use(express.static(path.join(__dirname, "..", "/public")));
+
+app.set("view engine", "ejs");
 app.use(express.static(path.join(path.resolve(), "/views")));
 
 app.use(
