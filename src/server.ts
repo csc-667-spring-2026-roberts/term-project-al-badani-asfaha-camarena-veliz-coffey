@@ -9,6 +9,7 @@ import connectPgSimple from "connect-pg-simple";
 import session from "express-session";
 import db from "./db/connection.js";
 import authRoutes from "./routes/auth.js";
+import gameRoutes from "./routes/games.js";
 import livereload from "livereload";
 import connectLivereload from "connect-livereload";
 // import loggingMiddleware from "./middleware/logging.js";
@@ -67,6 +68,7 @@ app.use("/", homeRoutes);
 // app.use("/", accountRoutes);
 app.use("/test", testRoutes);
 app.use("/", authRoutes);
+app.use("/game", gameRoutes);
 
 app.listen(PORT, () => {
   console.log("Server is running at http://localhost:" + String(PORT));

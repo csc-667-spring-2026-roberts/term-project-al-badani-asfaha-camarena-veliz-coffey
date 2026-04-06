@@ -1,12 +1,18 @@
 import db from "./connection.js";
-import { Game, GameListItem } from "../types/types.js";
+import { Game, GameListItem, User } from "../types/types.js";
 
-const create = async (user_id: number): Promise<Game> => {
+const create = async (user_id: number): Promise<GameListItem> => {
   const game = await db.one<Game>("INSERT INTO games DEFAULT VALUES RETURNING *");
 
   await db.none("INSERT INTO game_users (game_id, user_id) VALUES ($1, $2)", [game.id, user_id]);
-
-  return game;
+  const user = await db.one<User>("SELECT * FROM users WHERE id = ($1)", [user_id]);
+  return {
+    id: game.id,
+    status: game.status,
+    created_at: game.created_at,
+    player_count: 1,
+    creator_email: user.email,
+  };
 };
 
 const list = async (): Promise<GameListItem[]> => {

@@ -1,28 +1,46 @@
 <%- include('partials/header', { title: 'Lobby' }) %>
+    <script src="/js/lobby.js" defer></script>
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>
-    <%= typeof title !=="undefined" ? title : "Exploding Kittens" %>
-  </title>
-  <link rel="stylesheet" href="/css/styles.css">
-  <script src="/js/lobby.js" defer></script>
-</head>
+    <main>
+        <div class="center-wrapper center-elements">
+            <h1>Account Info</h1>
+            <div>
+                <img src="<%= avatar %>" alt="Avatar" class="avatar">
+            </div>
+            <div>
+                <p>Email: <%= email %>
+                </p>
+            </div>
+            <div>
+                <a href="/logout" class="btn-style">Logout</a>
+            </div>
+            <div>
+                <h1>Games</h1>
+                <button id="create-game" class="btn-style">Create Game</button>
+            </div>
+            <template id="game-template">
+                <tr>
+                    <td class="title"></td>
+                    <td class="game-status"></td>
+                    <td class="player-count"></td>
+                    <td class="creator-email"></td>
+                    <td class="created-at"></td>
+                </tr>
+            </template>
+            <table id="game-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Status</th>
+                        <th>Players</th>
+                        <th>Creator</th>
+                        <th>Created At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </main>
 
-<main>
-  <div class="center-wrapper center-elements">
-    <h1>Account Info</h1>
-    <div>
-      <img src="<%= avatar %>" alt="Avatar" class="avatar">
-    </div>
-    <div>
-      <p>Email: <%= email %></p>
-    </div>
-    <div>
-      <a href="/logout" class="btn-style">Logout</a>
-    </div>
-  </div>
-</main>
-
-<%- include('partials/footer') %>
+    <%- include('partials/footer') %>
