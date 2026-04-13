@@ -10,6 +10,8 @@ import session from "express-session";
 import db from "./db/connection.js";
 import authRoutes from "./routes/auth.js";
 import gameRoutes from "./routes/games.js";
+import gameApiRoutes from "./routes/gamesApi.js";
+import sseRoutes from "./routes/sse.js";
 import livereload from "livereload";
 import connectLivereload from "connect-livereload";
 // import loggingMiddleware from "./middleware/logging.js";
@@ -69,6 +71,8 @@ app.use("/", homeRoutes);
 app.use("/test", testRoutes);
 app.use("/", authRoutes);
 app.use("/game", gameRoutes);
+app.use("/api/sse", sseRoutes);
+app.use("/api/games", gameApiRoutes);
 
 app.listen(PORT, () => {
   console.log("Server is running at http://localhost:" + String(PORT));

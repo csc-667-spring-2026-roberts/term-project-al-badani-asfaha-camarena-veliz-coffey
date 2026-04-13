@@ -19,27 +19,21 @@
                 <button id="create-game" class="btn-style">Create Game</button>
             </div>
             <template id="game-template">
-                <tr>
-                    <td class="title"></td>
-                    <td class="game-status"></td>
-                    <td class="player-count"></td>
-                    <td class="creator-email"></td>
-                    <td class="created-at"></td>
-                </tr>
+                <div>
+                    <span class="title"></span>
+                    <span class="game-status"></span>
+                    <span class="player-count"></span>
+                    <span class="creator-email"></span>
+                    <!-- <span class="created-at"></span> -->
+                    <!-- <form data-form>
+                        <button data-join-button>Join game</button>
+                    </form> -->
+                     <a data-join-button class="btn-style">Join Game</a>
+                </div>
             </template>
-            <table id="game-table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Status</th>
-                        <th>Players</th>
-                        <th>Creator</th>
-                        <th>Created At</th>
-                    </tr>
-                </thead>
-                <tbody>
-                </tbody>
-            </table>
+            <div id="game-container">
+                
+            </div>
         </div>
     </main>
 
