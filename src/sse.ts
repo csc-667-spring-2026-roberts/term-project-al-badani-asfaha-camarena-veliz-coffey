@@ -37,7 +37,7 @@ function broadcast(data: object): void {
   }
 }
 
-function broadcastToGame(data: object, gameId: number): void {
+function broadcastToGame(gameId: number, data: object): void {
   for (const client of clients.values()) {
     if (client.gameId === gameId) {
       sendData(client, data);

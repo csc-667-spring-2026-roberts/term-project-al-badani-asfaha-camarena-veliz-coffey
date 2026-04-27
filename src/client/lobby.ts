@@ -94,7 +94,7 @@ source.onopen = (): void => {
 
 source.onmessage = (event): void => {
   const data = JSON.parse(event.data);
-  if (data.type === "game_updates") {
+  if (data.type === "games_updated") {
     displayGames(data.data);
   }
   console.log(event.data);
