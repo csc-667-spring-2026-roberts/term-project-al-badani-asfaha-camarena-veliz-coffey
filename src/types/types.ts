@@ -20,6 +20,10 @@ export interface DbUser extends User {
   password_hash: string;
 }
 
+export interface GameUserState extends Pick<User, "email" | "gravatar_url"> {
+  card_count: number;
+}
+
 export enum GameStatus {
   "waiting",
   "started",
@@ -38,4 +42,13 @@ export interface GameListItem {
   created_at: Date;
   creator_email: string;
   player_count: number;
+}
+
+export interface GameState {
+  players: GameUserState[];
+}
+
+export enum EventTypes {
+  games_updated = "games_updated",
+  game_state_updated = "game_state_updated",
 }
