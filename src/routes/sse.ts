@@ -6,6 +6,7 @@ const router = Router();
 
 router.get("/", requireAuth, (request, response) => {
   const userId = request.session.user?.id;
+
   if (userId) {
     const clientId = SSE.addClient(userId, response);
 

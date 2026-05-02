@@ -4,25 +4,44 @@ interface UserClient {
   response: Response;
   userId: number;
   gameId?: number;
+  keepalive: NodeJS.Timeout;
 }
 
 let nextClientId = 0;
 const clients: Map<number, UserClient> = new Map();
 
 function addClient(userId: number, response: Response, gameId?: number): number {
-  nextClientId++;
-  console.log(`Add client ${nextClientId.toString()} for user ${userId.toString()}`);
+  const id = nextClientId++;
+
+  console.log(`Add client ${id.toString()} for user ${userId.toString()}`);
+
   response.writeHead(200, {
     "content-type": "text/event-stream",
     "cache-control": "no-cache",
     connection: "keep-alive",
   });
+
   response.write("ok:\n\n");
-  clients.set(nextClientId, { userId: userId, response: response, gameId: gameId });
-  return nextClientId;
+
+  const keepalive = setInterval(() => {
+    try {
+      response.write(":ping\n\n");
+    } catch {
+      clearInterval(keepalive);
+    }
+  }, 25_000);
+
+  clients.set(id, { response: response, userId: userId, gameId: gameId, keepalive: keepalive });
+  return id;
 }
 
 function removeClient(clientId: number): void {
+  const client = clients.get(clientId);
+
+  if (client) {
+    clearInterval(client.keepalive);
+  }
+
   clients.delete(clientId);
 }
 
