@@ -1,10 +1,16 @@
-<%- include('partials/header', { title: 'Lobby' }) %>
-    <!-- <script src="/js/lobby.js" defer></script> -->
+<%- include('partials/header', { title: 'Game' }) %>
 
-    <main>
-        <div class="center-wrapper center-elements">
-            <h1>Exploding KittensGame <%= gameId %></h1>
-        </div>
-    </main>
+<header class="site-header">
+  <a href="/lobby" class="logo">💣 Exploding Kittens</a>
+  <a href="/lobby" class="btn btn-secondary" style="font-size:.875rem; padding:.45rem 1rem;">← Back to Lobby</a>
+</header>
 
-    <%- include('partials/footer') %>
+<main>
+  <div class="game-room">
+    <span class="bomb-icon">💣</span>
+    <h1>Game #<%= gameId %></h1>
+    <p style="color:var(--text-muted);">Waiting for players to join…</p>
+  </div>
+</main>
+
+<%- include('partials/footer') %>
