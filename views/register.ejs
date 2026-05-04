@@ -1,12 +1,19 @@
 <%- include('partials/header', { title: 'Register' }) %>
 
-<main>
-  <div class="center-wrapper">
-    <h1>Sign up</h1>
-    <%- include('partials/accountForm', { label: 'Register', route: '/register' }) %>
-    <div>
-      <a href="/login">You have account? Login here</a>
+<main class="page-center">
+  <div class="auth-wrapper">
+    <div class="auth-logo">
+      <span class="logo-bomb">💣</span>
+      <h1>Exploding Kittens</h1>
+      <p class="tagline">Create an account to start playing.</p>
     </div>
+    <div class="auth-card">
+      <h2>Sign Up</h2>
+      <%- include('partials/accountForm', { label: 'Register', route: '/register' }) %>
+    </div>
+    <p class="auth-footer">
+      Already have an account? <a href="/login">Login here</a>
+    </p>
   </div>
 </main>
 

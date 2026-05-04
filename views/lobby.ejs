@@ -1,40 +1,52 @@
 <%- include('partials/header', { title: 'Lobby' }) %>
-    <script src="/js/lobby.js" defer></script>
+<script src="/js/lobby.js" defer></script>
 
-    <main>
-        <div class="center-wrapper center-elements">
-            <h1>Account Info</h1>
-            <div>
-                <img src="<%= avatar %>" alt="Avatar" class="avatar">
-            </div>
-            <div>
-                <p>Email: <%= email %>
-                </p>
-            </div>
-            <div>
-                <a href="/logout" class="btn-style">Logout</a>
-            </div>
-            <div>
-                <h1>Games</h1>
-                <button id="create-game" class="btn-style">Create Game</button>
-            </div>
-            <template id="game-template">
-                <div>
-                    <span class="title"></span>
-                    <span class="game-status"></span>
-                    <span class="player-count"></span>
-                    <span class="creator-email"></span>
-                    <!-- <span class="created-at"></span> -->
-                    <!-- <form data-form>
-                        <button data-join-button>Join game</button>
-                    </form> -->
-                     <a data-join-button class="btn-style">Join Game</a>
-                </div>
-            </template>
-            <div id="game-container">
-                
-            </div>
+<header class="site-header">
+  <a href="/" class="logo">💣 Exploding Kittens</a>
+</header>
+
+<main>
+  <div class="lobby-layout">
+
+    <!-- Profile sidebar -->
+    <aside class="profile-card">
+      <img src="<%= avatar %>" alt="Avatar" class="avatar">
+      <p class="profile-name">Player</p>
+      <p class="profile-email"><%= email %></p>
+      <a href="/logout" class="btn btn-ghost btn-full">Logout</a>
+    </aside>
+
+    <!-- Games panel -->
+    <section class="games-panel">
+      <div class="games-header">
+        <h2>Games</h2>
+        <button id="create-game" class="btn">+ Create Game</button>
+      </div>
+
+      <!-- JS template for each game card -->
+      <template id="game-template">
+        <div class="game-card">
+          <div class="game-card-header">
+            <span class="title"></span>
+            <span class="game-status"></span>
+          </div>
+          <div class="game-card-meta">
+            <span class="player-count"></span>
+            <span class="creator-email"></span>
+          </div>
+          <a data-join-button class="btn btn-full" style="margin-top:.25rem;">Join Game →</a>
         </div>
-    </main>
+      </template>
 
-    <%- include('partials/footer') %>
+      <div id="game-container" class="games-grid">
+        <div class="games-empty">
+          <span class="empty-icon">🐱</span>
+          <p>No games yet. Create one to get started!</p>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<%- include('partials/footer') %>
