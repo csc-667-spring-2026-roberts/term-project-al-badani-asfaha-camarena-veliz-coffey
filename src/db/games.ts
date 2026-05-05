@@ -11,8 +11,8 @@ const create = async (user_id: number): Promise<GameListItem> => {
 
   await db.none(
     `
-    INSERT INTO game_cards (game_id, card_id, user_id, pile_position)
-    SELECT $1, cards.id, 0, ROW_NUMBER() OVER (ORDER BY random())
+    INSERT INTO game_cards (game_id, card_id, location, position)
+    SELECT $1, cards.id, 'deck', ROW_NUMBER() OVER (ORDER BY random())
     FROM cards`,
     [game.id],
   );
@@ -65,31 +65,30 @@ const playerCount = async (gameId: number): Promise<number> => {
 
 const DEAL_SQL = `
   UPDATE game_cards
-  SET user_id=$1
-  WHERE game_id=$2
+  SET game_player_id = $1,
+      location = 'hand'
+  WHERE game_id = $2
   AND card_id IN (
     SELECT card_id FROM game_cards
-    WHERE game_id=$2 AND user_id=0
+    WHERE game_id = $2 AND location = 'deck'
     ORDER BY random()
     LIMIT 7
 )`;
 
 const deal = async (gameId: number): Promise<void> => {
-  const players = await db.any<{ user_id: number }>(
-    "SELECT user_id FROM game_users WHERE game_id=$1",
-    [gameId],
-  );
+  const players = await db.any<{ id: number }>("SELECT id FROM game_users WHERE game_id=$1", [
+    gameId,
+  ]);
 
   for (const player of players) {
-    await db.none(DEAL_SQL, [player.user_id, gameId]);
+    await db.none(DEAL_SQL, [player.id, gameId]);
   }
 };
-
 const state = async (gameId: number): Promise<GameUserState[]> =>
   await db.many<GameUserState>(
     `SELECT users.email, users.gravatar_url, (
       SELECT COUNT(*) FROM game_cards
-      WHERE game_cards.game_id=$1 AND game_cards.user_id=users.id
+      WHERE game_cards.game_player_id = game_users.id
     ) AS card_count
     FROM users
     JOIN game_users ON game_users.user_id = users.id
