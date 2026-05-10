@@ -11,6 +11,7 @@
     <h1>Game #<%= gameId %></h1>
     <p style="color:var(--text-muted);">Waiting for players to join…</p>
   </div>
+  <%- include('partials/thread', { gameId: gameId, user: user }) %>
 </main>
 
 <%- include('partials/footer') %>

@@ -21,10 +21,10 @@ const router = Router();
 
 router.get("/:gameId", requireAuth, (request, response) => {
   const gameId = request.params.gameId;
-  // const userId = request.session.user?.id;
+  const userId = request.session.user?.id;
   // if gameId
   // Games.ge
-  response.status(200).render("game", { gameId: gameId });
+  response.status(200).render("game", { gameId: gameId, user: userId });
 
   // response.json({ succss: trufe });
 });
