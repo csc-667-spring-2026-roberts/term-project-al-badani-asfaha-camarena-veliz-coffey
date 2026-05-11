@@ -55,4 +55,29 @@ router.get("/:gameId/join", requireAuth, async (request, response) => {
   }
 });
 
+router.post("/:gameId/message", requireAuth, (request, response) => {
+  const userId = request.session.user?.id as number;
+  if (!userId) {
+    response.status(401).send("Unauthorized");
+    return;
+  }
+
+  const gameId = parseInt(request.params.gameId as string);
+
+  if (userId && gameId) {
+    const { text } = request.body as { text: string };
+    console.log({ text });
+    try {
+      SSE.broadcastToGame(gameId, {
+        type: EventTypes.game_message,
+        data: { user: userId.toString(), text: text },
+      });
+      response.json({ result: "success" });
+    } catch (error: unknown) {
+      console.error(error);
+      response.write({ result: "error" });
+    }
+  }
+});
+
 export default router;
