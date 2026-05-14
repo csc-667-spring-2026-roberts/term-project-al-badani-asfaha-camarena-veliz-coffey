@@ -40,13 +40,6 @@ router.get("/:gameId/join", requireAuth, async (request, response) => {
     try {
       await Games.joinGame(gameId, userId);
       SSE.broadcast({ type: EventTypes.games_updated, data: await Games.list() });
-
-      await Games.deal(gameId);
-      SSE.broadcastToGame(gameId, {
-        type: EventTypes.game_state_updated,
-        state: await Games.state(gameId),
-      });
-
       response.redirect(`/game/${String(gameId)}`);
     } catch (error: unknown) {
       console.error(error);
@@ -55,28 +48,113 @@ router.get("/:gameId/join", requireAuth, async (request, response) => {
   }
 });
 
-router.post("/:gameId/message", requireAuth, (request, response) => {
-  const userId = request.session.user?.id as number;
+router.get("/:gameId/state", requireAuth, async (request, response) => {
+  const gameId = parseInt(request.params.gameId as string);
+  const userId = request.session.user?.id;
+  if (!userId) {
+    response.status(401).send("Unauthorized");
+    return;
+  }
+  try {
+    const gameState = await Games.getFullState(gameId, userId);
+    response.json(gameState);
+  } catch (error: unknown) {
+    console.error(error);
+    response.status(500).json({ error: "Failed to load game state" });
+  }
+});
+
+router.post("/:gameId/start", requireAuth, async (request, response) => {
+  const gameId = parseInt(request.params.gameId as string);
+  const userId = request.session.user?.id;
   if (!userId) {
     response.status(401).send("Unauthorized");
     return;
   }
 
-  const gameId = parseInt(request.params.gameId as string);
+  const creator = await Games.isCreator(gameId, userId);
+  if (!creator) {
+    response.status(403).json({ error: "Only the game creator can start the game" });
+    return;
+  }
 
-  if (userId && gameId) {
-    const { text } = request.body as { text: string };
-    console.log({ text });
-    try {
-      SSE.broadcastToGame(gameId, {
-        type: EventTypes.game_message,
-        data: { user: userId.toString(), text: text },
-      });
-      response.json({ result: "success" });
-    } catch (error: unknown) {
-      console.error(error);
-      response.write({ result: "error" });
+  try {
+    await Games.startGame(gameId);
+    const gameState = await Games.getFullState(gameId, userId);
+    SSE.broadcastToGame(gameId, { type: EventTypes.game_state_updated, state: gameState });
+    SSE.broadcast({ type: EventTypes.games_updated, data: await Games.list() });
+    response.json({ success: true });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to start game";
+    response.status(400).json({ error: message });
+  }
+});
+
+router.post("/:gameId/draw", requireAuth, async (request, response) => {
+  const gameId = parseInt(request.params.gameId as string);
+  const userId = request.session.user?.id;
+  if (!userId) {
+    response.status(401).send("Unauthorized");
+    return;
+  }
+
+  try {
+    const gamePlayerId = await Games.getGameUserId(gameId, userId);
+    if (!gamePlayerId) {
+      response.status(403).json({ error: "You are not in this game" });
+      return;
     }
+
+    const currentTurn = await Games.getCurrentTurn(gameId);
+    if (!currentTurn || currentTurn.game_player_id !== gamePlayerId) {
+      response.status(403).json({ error: "It is not your turn" });
+      return;
+    }
+
+    const result = await Games.drawCard(gameId, gamePlayerId);
+    const gameState = await Games.getFullState(gameId, userId);
+    SSE.broadcastToGame(gameId, { type: EventTypes.game_state_updated, state: gameState });
+    response.json(result);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to draw card";
+    response.status(400).json({ error: message });
+  }
+});
+
+router.post("/:gameId/play", requireAuth, async (request, response) => {
+  const gameId = parseInt(request.params.gameId as string);
+  const userId = request.session.user?.id;
+  const { card_id } = request.body as { card_id: number };
+
+  if (!userId) {
+    response.status(401).send("Unauthorized");
+    return;
+  }
+
+  try {
+    const gamePlayerId = await Games.getGameUserId(gameId, userId);
+    if (!gamePlayerId) {
+      response.status(403).json({ error: "You are not in this game" });
+      return;
+    }
+
+    const currentTurn = await Games.getCurrentTurn(gameId);
+    if (!currentTurn || currentTurn.game_player_id !== gamePlayerId) {
+      response.status(403).json({ error: "It is not your turn" });
+      return;
+    }
+
+    const result = await Games.playCard(gameId, gamePlayerId, card_id);
+
+    if (result.success) {
+      const gameState = await Games.getFullState(gameId, userId);
+      SSE.broadcastToGame(gameId, { type: EventTypes.game_state_updated, state: gameState });
+    }
+
+    response.json(result);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to play card";
+    response.status(400).json({ error: message });
   }
 });
 

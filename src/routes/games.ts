@@ -26,7 +26,12 @@ router.get("/:gameId", requireAuth, (request, response) => {
   // Games.ge
   response.status(200).render("game", { gameId: gameId, user: userId });
 
-  // response.json({ succss: trufe });
+  if (!userId) {
+    response.redirect("/login");
+    return;
+  }
+
+  response.status(200).render("game", { gameId, userId });
 });
 
 export default router;
