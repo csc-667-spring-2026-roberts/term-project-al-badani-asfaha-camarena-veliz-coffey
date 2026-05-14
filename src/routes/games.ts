@@ -21,12 +21,14 @@ const router = Router();
 
 router.get("/:gameId", requireAuth, (request, response) => {
   const gameId = request.params.gameId;
-  // const userId = request.session.user?.id;
-  // if gameId
-  // Games.ge
-  response.status(200).render("game", { gameId: gameId });
+  const userId = request.session.user?.id;
 
-  // response.json({ succss: trufe });
+  if (!userId) {
+    response.redirect("/login");
+    return;
+  }
+
+  response.status(200).render("game", { gameId, userId });
 });
 
 export default router;

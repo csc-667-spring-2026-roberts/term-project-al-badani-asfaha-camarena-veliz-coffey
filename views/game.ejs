@@ -1,16 +1,261 @@
-<%- include('partials/header', { title: 'Game' }) %>
+<%- include('partials/header', { title: 'Game #' + gameId }) %>
+<script src="/js/game.js" defer></script>
+
+<style>
+.game-layout {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  height: calc(100vh - 56px);
+  padding: 1rem;
+  gap: 1rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+.game-status-bar {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: .75rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+#game-status-msg { font-weight: 700; }
+.game-main {
+  display: grid;
+  grid-template-columns: 210px 1fr;
+  gap: 1rem;
+  min-height: 0;
+}
+.players-sidebar {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  overflow-y: auto;
+}
+.players-sidebar h3 { font-size: 1.1rem; color: var(--text-muted); margin-bottom: .75rem; }
+.player-card {
+  display: flex; align-items: center; gap: .6rem;
+  padding: .5rem; border-radius: var(--radius-sm);
+  border: 1px solid transparent; margin-bottom: .4rem; transition: all .2s;
+}
+.player-card.current-turn { border-color: var(--primary); background: rgba(249,115,22,.08); }
+.player-card.dead { opacity: .35; }
+.player-card.me { border-color: var(--accent); }
+.player-avatar { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0; }
+.player-card.current-turn .player-avatar { border-color: var(--primary); box-shadow: 0 0 8px var(--primary-glow); }
+.player-info { flex: 1; min-width: 0; }
+.player-email { display: block; font-size: .78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.player-cards { display: block; font-size: .7rem; color: var(--text-muted); margin-top: .1rem; }
+.turn-indicator { display: block; font-size: .68rem; color: var(--primary); font-weight: 700; margin-top: .1rem; }
+.game-center { display: flex; flex-direction: column; gap: 1rem; min-height: 0; }
+.game-table {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 1.5rem; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 2rem; flex: 1;
+}
+.piles { display: flex; gap: 3rem; align-items: flex-start; }
+.pile { display: flex; flex-direction: column; align-items: center; gap: .5rem; }
+.pile-label { font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); font-weight: 700; }
+.card-back {
+  width: 80px; height: 112px;
+  background: linear-gradient(135deg, #1a3a60, #0d1f38);
+  border: 2px solid var(--primary); border-radius: 10px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-size: 2rem; cursor: pointer; transition: all .2s;
+  box-shadow: 0 4px 16px rgba(0,0,0,.4);
+}
+.card-back:hover:not(.disabled) { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(249,115,22,.35); }
+.card-back.disabled { cursor: default; opacity: .55; }
+.card-count { font-size: .75rem; color: var(--text-muted); }
+.discard-pile {
+  width: 80px; height: 112px;
+  background: var(--bg); border: 2px dashed var(--border); border-radius: 10px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .3rem;
+}
+#discard-emoji { font-size: 1.6rem; }
+#discard-top { font-size: .62rem; color: var(--text-muted); text-align: center; padding: 0 4px; }
+.waiting-box {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 1rem; text-align: center; padding: 3rem; flex: 1;
+}
+.waiting-box .bomb { font-size: 3.5rem; filter: drop-shadow(0 0 18px rgba(249,115,22,.6)); animation: pulse 2s ease-in-out infinite; }
+.waiting-box h2 { font-size: 2.2rem; color: var(--primary); }
+@keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+.hand-area { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: .85rem 1rem; }
+.hand-label { font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); font-weight: 700; margin-bottom: .65rem; }
+#hand-container { display: flex; gap: .55rem; overflow-x: auto; padding-bottom: .4rem; }
+.hand-card {
+  flex-shrink: 0; width: 90px; height: 126px;
+  border-radius: 10px; border: 2px solid rgba(255,255,255,.15);
+  display: flex; flex-direction: column;
+  cursor: default; transition: all .25s;
+  position: relative; overflow: hidden;
+  box-shadow: 0 3px 10px rgba(0,0,0,.5);
+}
+.card-corner {
+  padding: 5px 7px; font-size: .55rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .04em;
+  line-height: 1.1; color: rgba(255,255,255,.9); flex-shrink: 0;
+}
+.card-corner.bottom { margin-top: auto; transform: rotate(180deg); }
+.card-center { flex: 1; display: flex; align-items: center; justify-content: center; }
+.card-emoji { font-size: 2.1rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,.4)); }
+.hand-card .card-name { display: none; }
+.hand-card.playable { cursor: pointer; border-color: rgba(255,255,255,.4); }
+.hand-card.playable:hover { transform: translateY(-8px) scale(1.05); box-shadow: 0 12px 28px rgba(0,0,0,.6); border-color: #fff; }
+.peek-card {
+  border-radius: 10px; border: 2px solid rgba(255,255,255,.15);
+  padding: 0; width: 84px; height: 112px;
+  display: flex; flex-direction: column; overflow: hidden;
+  box-shadow: 0 3px 10px rgba(0,0,0,.5);
+}
+.peek-emoji { font-size: 1.8rem; }
+.peek-name { font-size: .6rem; color: rgba(255,255,255,.85); text-align: center; line-height: 1.2; }
+.empty-hand { color: var(--text-muted); font-size: .85rem; padding: .5rem 1rem; }
+.action-message {
+  position: fixed; bottom: 2rem; left: 50%;
+  transform: translateX(-50%) translateY(120px);
+  background: var(--bg-card); border: 1px solid var(--primary); border-radius: var(--radius);
+  padding: .8rem 1.5rem; font-weight: 700; font-size: .95rem;
+  z-index: 200; transition: transform .3s ease;
+  box-shadow: 0 4px 20px rgba(249,115,22,.25); max-width: 90vw; text-align: center;
+}
+.action-message.visible { transform: translateX(-50%) translateY(0); }
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 300;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity .2s;
+}
+.modal-overlay.visible { opacity: 1; pointer-events: all; }
+.modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 2rem; max-width: 400px; width: 90%; text-align: center; }
+.modal h3 { font-size: 1.8rem; color: var(--primary); margin-bottom: .5rem; }
+.modal p { color: var(--text-muted); font-size: .85rem; margin-bottom: 1.25rem; }
+#peek-cards { display: flex; gap: .65rem; justify-content: center; margin-bottom: 1.25rem; flex-wrap: wrap; }
+.peek-card { background: var(--bg); border: 2px solid var(--border); border-radius: 10px; padding: .85rem .6rem; width: 84px; display: flex; flex-direction: column; align-items: center; gap: .3rem; }
+.peek-emoji { font-size: 1.8rem; }
+.peek-name { font-size: .6rem; color: var(--text-muted); text-align: center; line-height: 1.2; }
+@media (max-width: 768px) {
+  .game-main { grid-template-columns: 1fr; }
+  .players-sidebar { max-height: 180px; }
+}
+
+.hand-card { position: relative; }
+.card-tooltip {
+  position: absolute; bottom: calc(100% + 10px); left: 50%;
+  transform: translateX(-50%);
+  background: #1e2535; border: 1px solid var(--primary);
+  border-radius: 8px; padding: .55rem .75rem;
+  font-size: .72rem; color: var(--text); line-height: 1.4;
+  width: 150px; text-align: center;
+  box-shadow: 0 4px 16px rgba(0,0,0,.6);
+  pointer-events: none; opacity: 0;
+  transition: opacity .15s ease;
+  z-index: 50;
+  white-space: normal;
+}
+.hand-card:hover .card-tooltip { opacity: 1; }
+</style>
+
+<!-- Data bridge for client JS -->
+<div id="game-data" data-game-id="<%= gameId %>" data-user-id="<%= userId %>" style="display:none;"></div>
 
 <header class="site-header">
   <a href="/lobby" class="logo">💣 Exploding Kittens</a>
-  <a href="/lobby" class="btn btn-secondary" style="font-size:.875rem; padding:.45rem 1rem;">← Back to Lobby</a>
+  <span style="color:var(--text-muted);font-size:.85rem;">Game #<%= gameId %></span>
+  <a href="/lobby" class="btn btn-secondary" style="font-size:.875rem;padding:.45rem 1rem;">← Lobby</a>
 </header>
 
-<main>
-  <div class="game-room">
-    <span class="bomb-icon">💣</span>
-    <h1>Game #<%= gameId %></h1>
-    <p style="color:var(--text-muted);">Waiting for players to join…</p>
+<main style="padding:0;">
+  <div class="game-layout">
+
+    <!-- Status bar -->
+    <div class="game-status-bar">
+      <span id="game-status-msg" style="color:var(--text-muted);">Connecting…</span>
+      <div style="display:flex;gap:.6rem;">
+        <button id="start-btn" class="btn" style="display:none;">🚀 Start Game</button>
+        <button id="draw-btn" class="btn" style="display:none;">🃏 Draw Card</button>
+      </div>
+    </div>
+
+    <!-- Main grid -->
+    <div class="game-main">
+
+      <!-- Players sidebar -->
+      <div class="players-sidebar">
+        <h3>Players</h3>
+        <div id="players-container">
+          <p style="color:var(--text-muted);font-size:.82rem;">Loading…</p>
+        </div>
+      </div>
+
+      <!-- Center -->
+      <div class="game-center">
+
+        <!-- Active game table -->
+        <div id="table-area" class="game-table" style="display:none;">
+          <div class="piles">
+            <div class="pile">
+              <span class="pile-label">Draw Pile</span>
+              <div class="card-back disabled" id="deck-card">🎴</div>
+              <span class="card-count" id="deck-count">— cards</span>
+            </div>
+            <div class="pile">
+              <span class="pile-label">Discard</span>
+              <div class="discard-pile">
+                <span id="discard-emoji">♻️</span>
+                <span id="discard-top">Empty</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Waiting -->
+        <div id="waiting-area" class="waiting-box">
+          <span class="bomb">💣</span>
+          <h2>Game #<%= gameId %></h2>
+          <p style="color:var(--text-muted);">Waiting for players to join…</p>
+          <p id="player-count-msg" style="color:var(--text-muted);font-size:.82rem;"></p>
+        </div>
+
+        <!-- Game over -->
+        <div id="ended-area" class="waiting-box" style="display:none;">
+          <span style="font-size:3.5rem;">🏆</span>
+          <h2 style="color:var(--accent);">Game Over!</h2>
+          <p id="winner-msg" style="font-size:1.05rem;"></p>
+          <a href="/lobby" class="btn btn-secondary">Back to Lobby</a>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Hand -->
+    <div class="hand-area" id="hand-area" style="display:none;">
+      <p class="hand-label">Your Hand</p>
+      <div id="hand-container">
+        <p class="empty-hand">No cards in hand</p>
+      </div>
+    </div>
+
   </div>
 </main>
+
+<!-- Toast -->
+<div class="action-message" id="action-message"></div>
+
+<!-- Peek modal -->
+<div class="modal-overlay" id="peek-modal">
+  <div class="modal">
+    <h3>🔮 See the Future</h3>
+    <p>Top 3 cards in the draw pile (top to bottom):</p>
+    <div id="peek-cards"></div>
+    <button class="btn" id="close-peek">Got it!</button>
+  </div>
+</div>
 
 <%- include('partials/footer') %>

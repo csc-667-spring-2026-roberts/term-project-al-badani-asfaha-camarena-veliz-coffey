@@ -52,3 +52,48 @@ export enum EventTypes {
   games_updated = "games_updated",
   game_state_updated = "game_state_updated",
 }
+
+// Gameplay Types
+
+export interface Card {
+  id: number;
+  card_type: string;
+  description: string;
+}
+
+export interface PlayerState {
+  id: number;
+  user_id: number;
+  email: string;
+  gravatar_url: string;
+  card_count: number;
+  is_alive: boolean;
+  turn_order: number | null;
+}
+
+export interface DetailedGameState {
+  game_id: number;
+  status: string;
+  players: PlayerState[];
+  deck_size: number;
+  discard_top: Card | null;
+  my_hand: Card[];
+  my_game_player_id: number | null;
+  current_game_player_id: number | null;
+  winner_email: string | null;
+  is_creator: boolean;
+}
+
+export interface DrawResult {
+  card: Card;
+  exploded: boolean;
+  defused: boolean;
+  turn_ended: boolean;
+}
+
+export interface PlayResult {
+  success: boolean;
+  message: string;
+  turn_ended: boolean;
+  peek?: Card[];
+}
