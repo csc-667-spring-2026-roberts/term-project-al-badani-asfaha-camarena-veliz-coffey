@@ -51,6 +51,7 @@ export interface GameState {
 export enum EventTypes {
   games_updated = "games_updated",
   game_state_updated = "game_state_updated",
+  game_message = "game_message",
 }
 
 // Gameplay Types

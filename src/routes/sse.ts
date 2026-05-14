@@ -21,4 +21,18 @@ router.get("/", requireAuth, (request, response) => {
   }
 });
 
+router.get("/:gameId", requireAuth, (request, response) => {
+  const userId = request.session.user?.id;
+  const gameId = parseInt(request.params.gameId as string);
+  if (userId && gameId) {
+    const clientId = SSE.addClient(userId, response, gameId);
+
+    request.on("close", () => {
+      console.log(`clinet closed ${clientId.toString()}`);
+      SSE.removeClient(clientId);
+      response.end();
+    });
+  }
+});
+
 export default router;
