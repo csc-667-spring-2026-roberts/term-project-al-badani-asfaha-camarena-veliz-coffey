@@ -53,7 +53,9 @@ async function startGame(): Promise<void> {
   }
 }
 
-function cardStyle(cardType: string): string {
+function cardStyle(cardType: string | null | undefined): string {
+  if (!cardType) return "linear-gradient(160deg,#374151,#1f2937)";
+
   const styles: Record<string, string> = {
     exploding_kitten: "linear-gradient(160deg,#f97316,#dc2626)",
     defuse: "linear-gradient(160deg,#22c55e,#15803d)",
@@ -69,6 +71,7 @@ function cardStyle(cardType: string): string {
     rainbow_cat: "linear-gradient(160deg,#f472b6,#7c3aed)",
     beard_cat: "linear-gradient(160deg,#fb923c,#92400e)",
   };
+
   return styles[cardType] ?? "linear-gradient(160deg,#374151,#1f2937)";
 }
 
@@ -122,29 +125,33 @@ async function playCard(cardId: number): Promise<void> {
 
 /** UI Helpers */
 
-function fmt(cardType: string): string {
+function fmt(cardType: string | null | undefined): string {
+  if (!cardType) return "Unknown";
   return cardType
     .split("_")
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(" ");
 }
 
-function cardEmoji(cardType: string): string {
+function cardEmoji(cardType: string | null | undefined): string {
+  if (!cardType) return "🃏";
+
   const map: Record<string, string> = {
     exploding_kitten: "💣",
     defuse: "🔧",
     skip: "⏭️",
     attack: "⚔️",
-    // favor: "🙏",
+    favor: "🙏",
     shuffle: "🔀",
     see_the_future: "🔮",
-    // nope: "🙅",
+    nope: "🙅",
     taco_cat: "🌮",
     hairy_potato_cat: "🥔",
     cattermelon: "🍉",
     rainbow_cat: "🌈",
     beard_cat: "🧔",
   };
+
   return map[cardType] ?? "🃏";
 }
 
