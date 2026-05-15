@@ -93,12 +93,11 @@ const deal = async (gameId: number): Promise<void> => {
     await db.none(DEAL_SQL, [player.id, gameId]);
   }
 };
-
 const state = async (gameId: number): Promise<GameUserState[]> =>
   await db.many<GameUserState>(
     `SELECT users.email, users.gravatar_url, (
       SELECT COUNT(*) FROM game_cards
-      WHERE game_cards.game_id=$1 AND game_cards.user_id=users.id
+      WHERE game_cards.game_player_id = game_users.id
     ) AS card_count
     FROM users
     JOIN game_users ON game_users.user_id = users.id
