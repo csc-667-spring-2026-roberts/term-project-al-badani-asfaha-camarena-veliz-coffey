@@ -468,6 +468,23 @@ const discardPlayedCard = async (gameId: number, cardId: number): Promise<void> 
   );
 };
 
+const getPlayerCardTypeIds = async (gamePlayerId: number, cardType: string): Promise<number[]> => {
+  const results = await db.many<{ card_id: number }>(
+    `SELECT
+	GC.CARD_ID
+FROM
+	PUBLIC.GAME_CARDS AS GC
+	INNER JOIN CARDS AS C ON C.ID = GC.CARD_ID
+WHERE
+	GC.GAME_PLAYER_ID = $1
+	AND GC.LOCATION = 'hand'
+	AND C.CARD_TYPE = $2`,
+    [gamePlayerId, cardType],
+  );
+  const cardIds = results.map((value) => value.card_id);
+  return cardIds;
+};
+
 const logTurnAction = async (
   turnId: number | null,
   cardId: number,
@@ -481,12 +498,80 @@ const logTurnAction = async (
   ]);
 };
 
+const stealCard = async (fromGamePlayerId: number, toGamePlaerId: number): Promise<void> => {
+  await db.none(
+    `UPDATE GAME_CARDS
+SET
+	GAME_PLAYER_ID = $1
+WHERE
+	GAME_PLAYER_ID = $2
+	AND LOCATION = 'hand'
+	AND CARD_ID IN (
+		SELECT
+			NGC.CARD_ID
+		FROM
+			GAME_CARDS NGC
+		WHERE
+			NGC.GAME_PLAYER_ID = $2
+			AND NGC.LOCATION = 'hand'
+		ORDER BY RANDOM()
+		LIMIT 1
+	);`,
+    [toGamePlaerId, fromGamePlayerId],
+  );
+};
+
+const applyStealCard = async (
+  gameId: number,
+  gamePlayerId: number,
+  cardId: number,
+  cardType: string,
+  turnId: number | null,
+  actionPlayerId?: number,
+): Promise<PlayResult> => {
+  const log = (action: string): Promise<void> => logTurnAction(turnId, cardId, action);
+  const cardIds = await getPlayerCardTypeIds(gamePlayerId, cardType);
+  const name = cardType
+    .split("_")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+  if (!cardIds[0] || !cardIds[1]) {
+    return {
+      success: false,
+      message: `You don't have a ${name} cat-card pair.`,
+      turn_ended: false,
+      select_player: false,
+    };
+  }
+
+  if (!actionPlayerId) {
+    return {
+      success: false,
+      message: `select a player to steal from.`,
+      turn_ended: false,
+      select_player: true,
+    };
+  }
+
+  await discardPlayedCard(gameId, cardIds[0]);
+  await discardPlayedCard(gameId, cardIds[1]);
+  await log("play_cat_pair");
+  await stealCard(actionPlayerId, gamePlayerId);
+  await endCurrentTurn(gameId, gamePlayerId);
+  return {
+    success: true,
+    message: `card stealed.`,
+    turn_ended: true,
+    select_player: false,
+  };
+};
 const applyCardEffect = async (
   gameId: number,
   gamePlayerId: number,
   cardId: number,
   cardType: string,
   turnId: number | null,
+  actionPlayerId?: number,
 ): Promise<PlayResult> => {
   const discard = (): Promise<void> => discardPlayedCard(gameId, cardId);
   const log = (action: string): Promise<void> => logTurnAction(turnId, cardId, action);
@@ -540,15 +625,7 @@ const applyCardEffect = async (
     case "favor":
       return { success: false, message: "Favor is not yet implemented.", turn_ended: false };
     default: {
-      const name = cardType
-        .split("_")
-        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-        .join(" ");
-      return {
-        success: false,
-        message: `${name} cat-card pairs are not yet implemented.`,
-        turn_ended: false,
-      };
+      return await applyStealCard(gameId, gamePlayerId, cardId, cardType, turnId, actionPlayerId);
     }
   }
 };
@@ -557,6 +634,7 @@ const playCard = async (
   gameId: number,
   gamePlayerId: number,
   cardId: number,
+  actionPlayerId?: number,
 ): Promise<PlayResult> => {
   const card = await db.oneOrNone<Card>(
     `SELECT c.id, c.card_type, c.description FROM game_cards gc
@@ -575,6 +653,7 @@ const playCard = async (
     cardId,
     card.card_type,
     currentTurn?.turn_id ?? null,
+    actionPlayerId,
   );
 };
 

@@ -124,7 +124,10 @@ router.post("/:gameId/draw", requireAuth, async (request, response) => {
 router.post("/:gameId/play", requireAuth, async (request, response) => {
   const gameId = parseInt(request.params.gameId as string);
   const userId = request.session.user?.id;
-  const { card_id } = request.body as { card_id: number };
+  const { card_id, action_player_id } = request.body as {
+    card_id: number;
+    action_player_id?: number;
+  };
 
   if (!userId) {
     response.status(401).send("Unauthorized");
@@ -143,8 +146,16 @@ router.post("/:gameId/play", requireAuth, async (request, response) => {
       response.status(403).json({ error: "It is not your turn" });
       return;
     }
-
-    const result = await Games.playCard(gameId, gamePlayerId, card_id);
+    let actionPlayerId: number | null = null;
+    if (action_player_id) {
+      actionPlayerId = await Games.getGameUserId(gameId, action_player_id);
+    }
+    let result;
+    if (actionPlayerId) {
+      result = await Games.playCard(gameId, gamePlayerId, card_id, actionPlayerId);
+    } else {
+      result = await Games.playCard(gameId, gamePlayerId, card_id);
+    }
 
     if (result.success) {
       const gameState = await Games.getFullState(gameId, userId);
@@ -155,6 +166,26 @@ router.post("/:gameId/play", requireAuth, async (request, response) => {
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Failed to play card";
     response.status(400).json({ error: message });
+  }
+});
+
+router.post("/:gameId/message", requireAuth, (request, response) => {
+  const user = request.session.user as { id?: number; email?: string };
+  if (!user.id || !user.email) {
+    response.status(401).send("Unauthorized");
+    return;
+  }
+  const gameId = parseInt(request.params.gameId as string);
+  const { text } = request.body as { text: string };
+  console.log({ text });
+  try {
+    SSE.broadcastToGame(gameId, {
+      type: EventTypes.game_message,
+      data: { userId: user.id, email: user.email, text: text },
+    });
+  } catch (error: unknown) {
+    console.error(error);
+    response.write("Error");
   }
 });
 

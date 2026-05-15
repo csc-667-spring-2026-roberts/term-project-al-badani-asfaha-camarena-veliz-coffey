@@ -26,7 +26,7 @@
 #game-status-msg { font-weight: 700; }
 .game-main {
   display: grid;
-  grid-template-columns: 210px 1fr;
+  grid-template-columns: 210px 1fr 300px;
   gap: 1rem;
   min-height: 0;
 }
@@ -140,10 +140,6 @@
 .peek-card { background: var(--bg); border: 2px solid var(--border); border-radius: 10px; padding: .85rem .6rem; width: 84px; display: flex; flex-direction: column; align-items: center; gap: .3rem; }
 .peek-emoji { font-size: 1.8rem; }
 .peek-name { font-size: .6rem; color: var(--text-muted); text-align: center; line-height: 1.2; }
-@media (max-width: 768px) {
-  .game-main { grid-template-columns: 1fr; }
-  .players-sidebar { max-height: 180px; }
-}
 
 .hand-card { position: relative; }
 .card-tooltip {
@@ -160,6 +156,78 @@
   white-space: normal;
 }
 .hand-card:hover .card-tooltip { opacity: 1; }
+
+/* ===== CHAT ===== */
+.chat-form input {
+  /* width: 20%; */
+  /* min-width: 150px; */
+  /* max-width: 600px; */
+  padding: .7rem 1rem;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: 'Nunito', sans-serif;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color .2s, box-shadow .2s;
+}
+
+.chat-form input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+#messages {
+    /* width: 20%; */
+    /* background: #181a1b;
+    border: 1px solid #23272a;
+    color: #e4e6eb; */
+    flex: 1;
+    /* min-width: 320px; */
+    overflow-y: auto;
+    max-width: 600px; 
+}
+
+.message {
+    display: block;
+    padding: 10px 16px;
+    margin-bottom: 12px;
+    border-radius: 18px;
+    max-width: 80%;
+    overflow-wrap: break-word;
+    font-size: 15px;
+    line-height: 1.4;
+    align-self: flex-start;
+}
+
+.message.self {
+    background-color: #2f3136;
+    color: #fff;
+}
+
+.message.other {
+    background-color: #36393f;
+    color: #d1d5db;
+}
+
+.chat-sidebar {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  overflow-y: auto;
+}
+.chat-sidebar h3 { font-size: 1.1rem; color: var(--text-muted); margin-bottom: .75rem; }
+
+@media (max-width: 768px) {
+  .game-main { grid-template-columns: 1fr; }
+  .players-sidebar { max-height: 180px; }
+  .chat-sidebar { display: none; }
+}
+
 </style>
 
 <!-- Data bridge for client JS -->
@@ -232,6 +300,17 @@
         </div>
 
       </div>
+
+      <!-- Chat sidebar -->
+      <div class="chat-sidebar">
+        <h3>Chat Thread</h3>
+        <div id="messages">
+        </div>
+        <form id="chatForm" class="chat-form" >
+          <input type="text" name="text" id="chatTextInput" autocomplete="off" required />
+          <!-- <button type="submit" class="btn btn-secondary">Send</button> -->
+      </form>
+      </div>
     </div>
 
     <!-- Hand -->
@@ -258,4 +337,13 @@
   </div>
 </div>
 
+<!-- Choose player modal -->
+<div class="modal-overlay" id="choose-player-modal">
+  <div class="modal">
+    <h3>Choose a player to steal from</h3>
+    <!-- <p>Top 3 cards in the draw pile (top to bottom):</p> -->
+    <form id="choose-player"></form>
+    <button class="btn" id="submit-choose-player">Steal!</button>
+  </div>
+</div>
 <%- include('partials/footer') %>

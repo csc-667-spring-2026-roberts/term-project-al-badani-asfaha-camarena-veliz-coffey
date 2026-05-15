@@ -14,13 +14,17 @@ source.onopen = (): void => {
   void fetchState();
 };
 
+interface Payload {
+  type: string;
+  data?: object;
+}
+
 source.onmessage = (event: MessageEvent): void => {
-  interface Payload {
-    type: string;
-  }
   const data = JSON.parse(event.data as string) as Payload;
   if (data.type === "game_state_updated") {
     void fetchState();
+  } else if (data.type === "game_message") {
+    renderMessage(data);
   }
 };
 
@@ -101,20 +105,26 @@ async function drawCard(): Promise<void> {
   }
 }
 
-async function playCard(cardId: number): Promise<void> {
+async function playCard(cardId: number, actionPlayerId?: number): Promise<void> {
   try {
+    // showChoosePlayerModal(cardId)
     const res = await fetch(`/api/games/${gameId.toString()}/play`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ card_id: cardId }),
+      body: JSON.stringify({ card_id: cardId, action_player_id: actionPlayerId }),
     });
     interface PlayRes {
       success?: boolean;
       message?: string;
       peek?: Card[];
+      style?: boolean;
       error?: string;
+      select_player?: boolean;
     }
     const result = (await res.json()) as PlayRes;
+    if (result.select_player) {
+      showChoosePlayerModal(cardId);
+    }
     const msg = result.message ?? result.error ?? "Unknown response";
     showMessage(result.success === false ? `⚠️ ${msg}` : msg);
     if (result.peek && result.peek.length > 0) showPeekModal(result.peek);
@@ -123,6 +133,20 @@ async function playCard(cardId: number): Promise<void> {
   }
 }
 
+async function sendMessage(text: string): Promise<void> {
+  try {
+    const res = await fetch(`/api/games/${gameId.toString()}/message`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        text: text,
+      }),
+    });
+    if (!res.ok) return;
+  } catch (e) {
+    console.error("sendMessage failed:", e);
+  }
+}
 /** UI Helpers */
 
 function fmt(cardType: string | null | undefined): string {
@@ -181,6 +205,15 @@ function showPeekModal(cards: Card[]): void {
   modal.classList.add("visible");
 }
 
+function showChoosePlayerModal(cardId: number): void {
+  const modal = document.getElementById("choose-player-modal");
+  if (!modal) return;
+  const cardInput = document.querySelector(
+    '#choose-player input[name="card-id"]',
+  ) as HTMLInputElement;
+  cardInput.value = cardId.toString();
+  modal.classList.add("visible");
+}
 // ── Render ──────────────────────────────────────────────────
 
 function render(s: DetailedGameState): void {
@@ -190,6 +223,7 @@ function render(s: DetailedGameState): void {
   renderDeck(s);
   renderHand(s);
   renderControls(s);
+  renderChoosePlayer(s);
 }
 
 function renderAreas(s: DetailedGameState): void {
@@ -332,7 +366,62 @@ function renderControls(s: DetailedGameState): void {
   }
 }
 
+function renderMessage(data: Payload): void {
+  const msg = data.data as { text: string; email: string; userId: number };
+  const div = document.createElement("div");
+  div.className = `message ${msg.userId === currentUserId ? "self" : "other"}`;
+  const user = msg.userId === currentUserId ? "You" : (msg.email.split("@")[0] ?? msg.email);
+  div.innerHTML = `<strong>${user}:</strong> <div> ${msg.text}</div>`;
+  const messagesDiv = document.getElementById("messages");
+  if (messagesDiv) {
+    messagesDiv.appendChild(div);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  }
+}
+
+function renderChoosePlayer(s: DetailedGameState): void {
+  const container = document.getElementById("choose-player");
+  if (!container) return;
+
+  container.innerHTML =
+    s.players
+      .filter((p) => p.user_id !== currentUserId && p.is_alive)
+      .map((p) => {
+        const label = p.email.split("@")[0] ?? p.email;
+        return `<label for="${p.user_id.toString()}"><div class="player-card">
+        <input type="radio" id="${p.user_id.toString()}" name="steal-player" value="${p.user_id.toString()}">
+        <img src="${p.gravatar_url}" alt="avatar" class="player-avatar">
+        <div class="player-info">
+          <span class="player-email" title="${p.email}">${label}</span>
+          <span class="player-cards">${p.is_alive ? `🃏 ${p.card_count.toString()} cards` : "💀 Eliminated"}</span>
+        </div>
+      </div></label>`;
+      })
+      .join("") + `<input type="hidden" name="card-id" value="">`;
+}
 // ── Init ────────────────────────────────────────────────────
 document.getElementById("close-peek")?.addEventListener("click", () => {
   document.getElementById("peek-modal")?.classList.remove("visible");
+});
+
+document.getElementById("submit-choose-player")?.addEventListener("click", () => {
+  const choosePlayerForm = document.getElementById("choose-player");
+  if (!choosePlayerForm) return;
+  const selected = choosePlayerForm.querySelector(
+    'input[name="steal-player"]:checked',
+  ) as HTMLInputElement;
+  const selectedPlayerId = parseInt(selected.value);
+  const cardInput = choosePlayerForm.querySelector('input[name="card-id"]') as HTMLInputElement;
+  const cardId = parseInt(cardInput.value);
+  void playCard(cardId, selectedPlayerId);
+  // console.log(selectedPlayerId);
+  // console.log(cardId);
+  document.getElementById("choose-player-modal")?.classList.remove("visible");
+});
+
+document.getElementById("chatForm")?.addEventListener("submit", function (e) {
+  e.preventDefault();
+  const textInput = document.getElementById("chatTextInput") as HTMLInputElement;
+  void sendMessage(textInput.value);
+  textInput.value = "";
 });

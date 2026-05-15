@@ -4,6 +4,8 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   // ── cards: add new columns, re-seed with EK cards ──────────────
   pgm.sql(`ALTER TABLE cards ADD COLUMN IF NOT EXISTS card_type TEXT`);
   pgm.sql(`ALTER TABLE cards ADD COLUMN IF NOT EXISTS description TEXT NOT NULL DEFAULT ''`);
+  pgm.sql(`ALTER TABLE cards DROP COLUMN IF EXISTS rank`);
+  pgm.sql(`ALTER TABLE cards DROP COLUMN IF EXISTS suit`);
   pgm.sql(`DELETE FROM game_cards`);
   pgm.sql(`DELETE FROM cards`);
   pgm.sql(`INSERT INTO cards (card_type, description) VALUES

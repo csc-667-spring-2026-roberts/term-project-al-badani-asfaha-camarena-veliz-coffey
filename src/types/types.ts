@@ -97,4 +97,5 @@ export interface PlayResult {
   message: string;
   turn_ended: boolean;
   peek?: Card[];
+  select_player?: boolean;
 }
