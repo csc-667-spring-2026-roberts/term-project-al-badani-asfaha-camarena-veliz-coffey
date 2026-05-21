@@ -1,4 +1,4 @@
-# Team Name — Game Name
+# Exploding Kittens !
 
 CSC 667 Term Project — Spring 2026
 
@@ -8,8 +8,8 @@ CSC 667 Term Project — Spring 2026
 |------|--------|-------|
 | Ronan Coffey | ronancoffey510 | rcoffey@sfsu.edu |
 | Ghadeer Al-badani | Ghadeersfsu | galbadani@sfsu.edu |
-| Member 3 | @username | email@sfsu.edu |
-| Member 4 | @username | email@sfsu.edu |
+| Fabian Camarena | @username | email@sfsu.edu |
+| Mebrahtu Asfaha | @username | email@sfsu.edu |
 
 ## Setup
 
@@ -19,6 +19,15 @@ cp .env.example .env
 # Edit .env with your database credentials
 npm run dev
 ```
+
+## Game URL
+
+https://term-project-al-badani-asfaha-camarena.onrender.com
+
+# Known Limitations
+
+Nope card is not implemented, removed because of time constraint.
+Attack card doesn't force opponent to take 2 turns, it only ends current turn.
 
 ## Scripts
 
