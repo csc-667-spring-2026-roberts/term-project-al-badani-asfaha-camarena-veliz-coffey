@@ -339,6 +339,14 @@ const startGame = async (gameId: number): Promise<void> => {
     [gameId, players.length - 1],
   );
 
+  await db.none(
+    `UPDATE game_cards SET location = 'discard', position = NULL
+    WHERE game_id = $1 AND card_id IN (
+      SELECT gc.card_id FROM game_cards gc JOIN cards c ON gc.card_id = c.id
+      WHERE gc.game_id = $1 AND c.card_type IN ('nope', 'favor'))`,
+    [gameId],
+  );
+
   for (const player of players) {
     await dealToPlayer(gameId, player.id);
   }
@@ -560,7 +568,7 @@ const applyStealCard = async (
   await endCurrentTurn(gameId, gamePlayerId);
   return {
     success: true,
-    message: `card stealed.`,
+    message: `Card stolen!`,
     turn_ended: true,
     select_player: false,
   };

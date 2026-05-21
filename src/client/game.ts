@@ -320,12 +320,15 @@ function renderDeck(s: DetailedGameState): void {
 function renderHand(s: DetailedGameState): void {
   const container = document.getElementById("hand-container");
   if (!container) return;
-  if (s.my_hand.length === 0) {
+
+  const displayHand = s.my_hand.filter((c) => !["nope", "favor"].includes(c.card_type));
+
+  if (displayHand.length === 0) {
     container.innerHTML = '<p class="empty-hand">No cards in hand</p>';
     return;
   }
   const isMyTurn = s.my_game_player_id === s.current_game_player_id && s.status === "started";
-  container.innerHTML = s.my_hand
+  container.innerHTML = displayHand
     .map((c) => {
       const playable = isMyTurn && !["defuse", "exploding_kitten"].includes(c.card_type);
       const name = fmt(c.card_type);
@@ -334,6 +337,7 @@ function renderHand(s: DetailedGameState): void {
         <div class="card-corner">${name}</div>
         <div class="card-center"><span class="card-emoji">${cardEmoji(c.card_type)}</span></div>
         <div class="card-corner bottom">${name}</div>
+        <div class="card-tooltip">${c.description}</div>
       </div>`;
     })
     .join("");
